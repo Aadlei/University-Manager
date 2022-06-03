@@ -27,6 +27,8 @@ namespace University
             const string findStudentsQuery = "Select * FROM Students";
             var cmd = new MySqlCommand(findStudentsQuery, _con);
             MySqlDataReader finder = cmd.ExecuteReader();
+            
+            // Selection that allows you to go back to main menu
             Console.WriteLine(" ");
             Console.WriteLine("0. Go back.");
             while (finder.Read())
@@ -39,6 +41,7 @@ namespace University
                     finder.GetString(4));
             }
             
+            // Returns the student ID for use in other functions
             Console.WriteLine(" ");
             Console.WriteLine("Enter the ID of the student you wish to modify.");
             int id = Convert.ToInt32(Console.ReadLine());
@@ -47,7 +50,25 @@ namespace University
         }
         
         // PRINT ALL STUDENTS
-        
+        public void PrintAllStudents()
+        {
+            _con = Connection();
+            // Concatenates the firstname and lastname so it becomes a full name
+            const string printStudentsQuery = "SELECT ID, CONCAT(Firstname, ' ', Lastname) AS 'Name', Email, Year AS 'Birth year' FROM Students";
+            var cmd = new MySqlCommand(printStudentsQuery, _con);
+            MySqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                Console.WriteLine(
+                    reader.GetName(0) + ": " + reader.GetString(0) + ", " +
+                    reader.GetName(1) + ": " + reader.GetString(1) + ", " +
+                    reader.GetName(2) + ": " + reader.GetString(2) + ", " +
+                    reader.GetName(3) + ": " + reader.GetString(3));
+            }
+
+            _con.Close();
+        }
         
         // ADD STUDENT FUNCTION //
         public void AddStudent(string firstname, string lastname, string email, int year)
@@ -55,6 +76,8 @@ namespace University
             _con = Connection();
             const string addStudentQuery = "INSERT INTO students(Firstname, Lastname, Email, Year) VALUES(?first, ?last, ?email, ?year)";
             var cmd = new MySqlCommand(addStudentQuery, _con);
+            
+            // Gets variables from Menu, binds them together into the query
             cmd.Parameters.AddWithValue("?first", firstname);
             cmd.Parameters.AddWithValue("?last", lastname);
             cmd.Parameters.AddWithValue("?email", email);
@@ -79,6 +102,8 @@ namespace University
         public void EditStudent(int id, string firstname, string lastname, string email, int year)
         {
             _con = Connection();
+            
+            // Query needs student id to specify the student to modify
             const string editStudentQuery = "UPDATE Students SET Firstname = ?firstname, Lastname = ?lastname, Email = ?email, Year = ?year WHERE ID = ?ID";
             var cmd = new MySqlCommand(editStudentQuery, _con);
             cmd.Parameters.AddWithValue("?firstname", firstname);
@@ -122,6 +147,36 @@ namespace University
                 Console.WriteLine("Failed to remove student!");
             }
 
+            _con.Close();
+        }
+        
+        // SEARCH STUDENT FUNCTION // 
+        public void SearchStudent()
+        {
+            _con = Connection();
+            Console.WriteLine("Type in the student's name to search.");
+            // Combines wildcard with entered name
+            string search =  "%" + Console.ReadLine() + "%";
+            
+            const string searchStudentQuery = 
+                "SELECT Students.ID, CONCAT(Students.Firstname, ' ', Students.Lastname) AS 'Name', Courses.Course_Name, Grades.Grade " + 
+                    "FROM Students, Courses, Grades " + 
+                        "WHERE CONCAT(Students.Firstname, ' ', Students.Lastname) LIKE ?search " +
+                            "AND Students.ID = Grades.Student_ID " +
+                                "AND Courses.ID = Grades.Course_ID";
+
+            var cmd = new MySqlCommand(searchStudentQuery, _con);
+            cmd.Parameters.AddWithValue("?search", search);
+            MySqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                Console.WriteLine(reader.GetName(0) + ": " + reader.GetString(0) + ", " +
+                                  reader.GetName(1) + ": " + reader.GetString(1) + ", " +
+                                  reader.GetName(2) + ": " + reader.GetString(2) + ", " +
+                                  reader.GetName(3) + ": " + reader.GetString(3));
+            }
+            
             _con.Close();
         }
         
@@ -190,14 +245,16 @@ namespace University
             _con.Close();
         }
 
+        // PRINT GRADES FUNCTION
         private int ShowGrades(int studentId)
         {
+            // Functions prints out selection for grades the selected student you can delete
             const string showGradesQuery = "SELECT CONCAT(Students.Firstname, ' ', Students.Lastname) AS Name, " +
-                                           "Courses.ID, Courses.Course_name AS 'Course name', Grades.Grade " +
-                                           "FROM Students, Courses, Grades " +
-                                           "WHERE Students.ID = Grades.Student_ID " +
-                                           "AND Courses.ID = Grades.Course_ID " +
-                                           "AND Grades.Student_ID = ?student ";
+                                                "Courses.ID, Courses.Course_name AS 'Course name', Grades.Grade " +
+                                                    "FROM Students, Courses, Grades " +
+                                                        "WHERE Students.ID = Grades.Student_ID " +
+                                                            "AND Courses.ID = Grades.Course_ID " +
+                                                                "AND Grades.Student_ID = ?student ";
             var cmd = new MySqlCommand(showGradesQuery, _con);
             var name = new MySqlCommand(showGradesQuery, _con);
             cmd.Parameters.AddWithValue("?student", studentId);

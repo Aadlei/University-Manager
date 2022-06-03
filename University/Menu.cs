@@ -148,10 +148,13 @@ namespace University
                     break;
                 // Read All Students
                 case "7":
+                    s.PrintAllStudents();
+                    break;
                     
                 // Search students
                 case "8":
-                    
+                    s.SearchStudent();
+                    break;
                 // Exit    
                 case "9":
                     Environment.Exit(0);
